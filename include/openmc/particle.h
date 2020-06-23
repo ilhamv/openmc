@@ -76,6 +76,10 @@ struct NuclideMicroXS {
   double thermal_elastic;  //!< Bound thermal elastic scattering
   double photon_prod;      //!< microscopic photon production xs
 
+  // Cross sections for alpha (time eigenvalue) mode
+  double nu_fission_alpha;  //!< nu_fission with time correction
+  double nu_fission_prompt; //!< prompt neutron production from fission
+
   // Cross sections for depletion reactions (note that these are not stored in
   // macroscopic cache)
   double reaction[DEPLETION_RX.size()];
@@ -123,6 +127,10 @@ struct MacroXS {
   double fission;       //!< macroscopic fission xs
   double nu_fission;    //!< macroscopic production xs
   double photon_prod;   //!< macroscopic photon production xs
+
+  // Cross sections for alpha (time eigenvalue) mode
+  double nu_fission_alpha;  //!< nu_fission with time correction
+  double nu_fission_prompt;
 
   // Photon cross sections
   double coherent;        //!< macroscopic coherent xs
@@ -347,6 +355,10 @@ public:
   double keff_tally_collision_ {0.0};
   double keff_tally_tracklength_ {0.0};
   double keff_tally_leakage_ {0.0};
+  // For alpha (time eigenvalue) mode
+  double alpha_tally_Cn_ {0.0};
+  double alpha_tally_Cp_ {0.0};
+  std::vector<std::vector<double>> alpha_tally_Cd_;
 
   bool trace_ {false};     //!< flag to show debug information
 

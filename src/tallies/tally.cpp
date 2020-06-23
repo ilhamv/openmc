@@ -64,6 +64,9 @@ double global_tally_absorption;
 double global_tally_collision;
 double global_tally_tracklength;
 double global_tally_leakage;
+double global_tally_alpha_Cn;                          
+double global_tally_alpha_Cp;                          
+std::vector<std::vector<double>> global_tally_alpha_Cd;
 
 int
 score_str_to_int(std::string score_str)

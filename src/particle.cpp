@@ -190,10 +190,14 @@ Particle::event_calculate_xs()
       g_last_ = g_;
     }
   } else {
-    macro_xs_.total      = 0.0;
-    macro_xs_.absorption = 0.0;
-    macro_xs_.fission    = 0.0;
-    macro_xs_.nu_fission = 0.0;
+    macro_xs_.total             = 0.0;
+    macro_xs_.absorption        = 0.0;
+    macro_xs_.fission           = 0.0;
+    macro_xs_.nu_fission        = 0.0;
+    if (settings::alpha_mode) {
+      macro_xs_.nu_fission_prompt = 0.0;
+      macro_xs_.nu_fission_alpha  = 0.0; // Time corrected nu_fission
+    }
   }
 }
 
@@ -216,6 +220,35 @@ Particle::event_advance()
   // Select smaller of the two distances
   double distance = std::min(boundary_.distance, collision_distance_);
 
+  // Particle weight time correction
+  double weight_time; // Particle weight after time correction
+  double weight_avg;  // Average weight for tracklength tallies
+  double speed;
+  if (settings::alpha_mode) {
+    // Calculate particle speed
+    if (settings::run_CE) {
+      speed = std::sqrt(2. * E_ / MASS_NEUTRON_EV) * C_LIGHT * 100.;
+    } else {
+      speed = settings::mg_speeds[g_];
+    }
+
+    // Time absorption/source cross-section
+    double alpha_xs   = simulation::alpha_eff / speed;
+    double d_alpha_xs = distance * alpha_xs;
+
+    //  Weight time correction
+    weight_time = wgt_ * std::exp(-d_alpha_xs);
+    
+    //  Average weight is temporaily assigned for TL tally scoring
+    if (simulation::alpha_eff != 0.0) {
+      weight_avg = (wgt_ - weight_time) / d_alpha_xs;
+    } else {
+      weight_avg = weight_time;
+    }
+    wgt_last_ = weight_avg;
+    wgt_ = weight_avg;
+  }
+
   // Advance particle
   for (int j = 0; j < n_coord_; ++j) {
     coord_[j].r += distance * coord_[j].u;
@@ -229,12 +262,49 @@ Particle::event_advance()
   // Score track-length estimate of k-eff
   if (settings::run_mode == RunMode::EIGENVALUE &&
       type_ == Particle::Type::neutron) {
-    keff_tally_tracklength_ += wgt_ * distance * macro_xs_.nu_fission;
+    const double score = wgt_ * distance;
+    if (settings::alpha_mode) {
+      keff_tally_tracklength_ += score * macro_xs_.nu_fission_alpha;
+
+      // Integrals/global variables for alpha (time) eigenvalue update
+      alpha_tally_Cn_ += score * 1.0/speed;
+      alpha_tally_Cp_ += score * macro_xs_.nu_fission_prompt;
+      // Cd
+      if (settings::run_CE) {
+        for (int i = 0; i < model::materials[material_]->nuclide_.size(); i++) {
+          int nuc = model::materials[material_]->nuclide_[i];
+          if (data::nuclides[nuc]->fissionable_) {
+            double atom_density = model::materials[material_]->atom_density_(i);
+            int idx = simulation::alpha_idx[nuc]; 
+            for (int j = 0; j < simulation::alpha_J[idx]; j++) {
+              alpha_tally_Cd_[idx][j] += score * atom_density * neutron_xs_[nuc].fission 
+                * data::nuclides[nuc]->nu(E_, Nuclide::EmissionMode::delayed,j+1);
+            }
+          }
+        }
+      } else {
+        if (data::mg.macro_xs_[material_].fissionable) {
+          int idx = simulation::alpha_idx[material_]; 
+          for (int j = 0; j < simulation::alpha_J[idx]; j++) {
+            alpha_tally_Cd_[idx][j] += score * data::mg.macro_xs_[material_]
+              .get_xs(MgxsType::DELAYED_NU_FISSION, g_, nullptr, nullptr, &j);
+          }             
+        }               
+      }                 
+    } else {            
+      keff_tally_tracklength_ += score * macro_xs_.nu_fission;
+    }
   }
 
   // Score flux derivative accumulators for differential tallies.
   if (!model::active_tallies.empty()) {
     score_track_derivative(*this, distance);
+  }
+
+  // Assign the time corrected weight since we are done with TL tally scoring
+  if (settings::alpha_mode) {
+    wgt_last_ = weight_time;
+    wgt_ = weight_time;
   }
 }
 
@@ -274,8 +344,13 @@ Particle::event_collide()
   // Score collision estimate of keff
   if (settings::run_mode == RunMode::EIGENVALUE &&
       type_ == Particle::Type::neutron) {
-    keff_tally_collision_ += wgt_ * macro_xs_.nu_fission
-      / macro_xs_.total;
+    if (settings::alpha_mode) {
+      keff_tally_collision_ += wgt_ * macro_xs_.nu_fission_alpha
+                                / macro_xs_.total;
+    } else {
+      keff_tally_collision_ += wgt_ * macro_xs_.nu_fission
+                               / macro_xs_.total;
+    }
   }
 
   // Score surface current tallies -- this has to be done before the collision
@@ -393,6 +468,23 @@ Particle::event_death()
   keff_tally_collision_   = 0.0;
   keff_tally_tracklength_ = 0.0;
   keff_tally_leakage_     = 0.0;
+
+  // Now for alpha (time eigenvalue) mode-related tallies
+  if (settings::alpha_mode) {
+    #pragma omp atomic
+    global_tally_alpha_Cn += alpha_tally_Cn_;
+    alpha_tally_Cn_ = 0.0;
+    #pragma omp atomic
+    global_tally_alpha_Cp += alpha_tally_Cp_;
+    alpha_tally_Cp_ = 0.0;
+    for (int i = 0; i < simulation::alpha_I; i++) { 
+      for (int j = 0; j < simulation::alpha_J[i]; j++) {
+        #pragma omp atomic
+        global_tally_alpha_Cd[i][j] += alpha_tally_Cd_[i][j];
+        alpha_tally_Cd_[i][j] = 0.0;
+      }
+    }
+  }
 
   // Record the number of progeny created by this particle.
   // This data will be used to efficiently sort the fission bank.

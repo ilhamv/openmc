@@ -156,8 +156,14 @@ create_fission_sites(Particle& p, int i_nuclide, const Reaction& rx)
   double weight = settings::ufs_on ? ufs_get_weight(p) : 1.0;
 
   // Determine the expected number of neutrons produced
-  double nu_t = p.wgt_ / simulation::keff * weight * p.neutron_xs_[
-    i_nuclide].nu_fission / p.neutron_xs_[i_nuclide].total;
+  double nu_t;
+  if (settings::alpha_mode) {
+    nu_t = p.wgt_ / simulation::keff * weight * p.neutron_xs_[
+      i_nuclide].nu_fission_alpha / p.neutron_xs_[i_nuclide].total;
+  } else {
+    nu_t = p.wgt_ / simulation::keff * weight * p.neutron_xs_[
+      i_nuclide].nu_fission / p.neutron_xs_[i_nuclide].total;
+  }
 
   // Sample the number of neutrons produced
   int nu = static_cast<int>(nu_t);
@@ -591,8 +597,13 @@ void absorption(Particle& p, int i_nuclide)
 
     // Score implicit absorption estimate of keff
     if (settings::run_mode == RunMode::EIGENVALUE) {
-      p.keff_tally_absorption_ += p.wgt_absorb_ * p.neutron_xs_[
-        i_nuclide].nu_fission / p.neutron_xs_[i_nuclide].absorption;
+      if (settings::alpha_mode){
+        p.keff_tally_absorption_ += p.wgt_absorb_ * p.neutron_xs_[
+          i_nuclide].nu_fission_alpha / p.neutron_xs_[i_nuclide].absorption;
+      } else {
+        p.keff_tally_absorption_ += p.wgt_absorb_ * p.neutron_xs_[
+          i_nuclide].nu_fission / p.neutron_xs_[i_nuclide].absorption;
+      }
     }
   } else {
     // See if disappearance reaction happens
@@ -600,8 +611,13 @@ void absorption(Particle& p, int i_nuclide)
         prn(p.current_seed()) * p.neutron_xs_[i_nuclide].total) {
       // Score absorption estimate of keff
       if (settings::run_mode == RunMode::EIGENVALUE) {
-        p.keff_tally_absorption_ += p.wgt_ * p.neutron_xs_[
-          i_nuclide].nu_fission / p.neutron_xs_[i_nuclide].absorption;
+        if (settings::alpha_mode){
+          p.keff_tally_absorption_ += p.wgt_ * p.neutron_xs_[
+            i_nuclide].nu_fission_alpha / p.neutron_xs_[i_nuclide].absorption;
+        } else {
+          p.keff_tally_absorption_ += p.wgt_ * p.neutron_xs_[
+            i_nuclide].nu_fission / p.neutron_xs_[i_nuclide].absorption;
+        }
       }
 
       p.alive_ = false;
@@ -1010,8 +1026,14 @@ void sample_fission_neutron(int i_nuclide, const Reaction& rx, double E_in, Part
 
   // Determine total nu, delayed nu, and delayed neutron fraction
   const auto& nuc {data::nuclides[i_nuclide]};
-  double nu_t = nuc->nu(E_in, Nuclide::EmissionMode::total);
-  double nu_d = nuc->nu(E_in, Nuclide::EmissionMode::delayed);
+  double nu_t, nu_d;
+  if (settings::alpha_mode) {
+    nu_t = nuc->nu(E_in, Nuclide::EmissionMode::total_alpha);
+    nu_d = nuc->nu(E_in, Nuclide::EmissionMode::delayed_alpha);
+  } else {
+    nu_t = nuc->nu(E_in, Nuclide::EmissionMode::total);
+    nu_d = nuc->nu(E_in, Nuclide::EmissionMode::delayed);
+  }
   double beta = nu_d / nu_t;
 
   if (prn(seed) < beta) {
@@ -1024,7 +1046,12 @@ void sample_fission_neutron(int i_nuclide, const Reaction& rx, double E_in, Part
     int group;
     for (group = 1; group < nuc->n_precursor_; ++group) {
       // determine delayed neutron precursor yield for group j
-      double yield = (*rx.products_[group].yield_)(E_in);
+      double yield;
+      if (settings::alpha_mode) {
+        yield = nuc->nu(E_in, Nuclide::EmissionMode::delayed_alpha, group);
+      } else {
+        yield = nuc->nu(E_in, Nuclide::EmissionMode::delayed, group);
+      }
 
       // Check if this group is sampled
       prob += yield;

@@ -742,6 +742,10 @@ void Material::calculate_xs(Particle& p) const
   p.macro_xs_.absorption = 0.0;
   p.macro_xs_.fission = 0.0;
   p.macro_xs_.nu_fission = 0.0;
+  if (settings::alpha_mode) {
+    p.macro_xs_.nu_fission_alpha = 0.0;
+    p.macro_xs_.nu_fission_prompt = 0.0;
+  }
 
   if (p.type_ == Particle::Type::neutron) {
     this->calculate_neutron_xs(p);
@@ -817,6 +821,10 @@ void Material::calculate_neutron_xs(Particle& p) const
     p.macro_xs_.absorption += atom_density * micro.absorption;
     p.macro_xs_.fission += atom_density * micro.fission;
     p.macro_xs_.nu_fission += atom_density * micro.nu_fission;
+    if (settings::alpha_mode){
+      p.macro_xs_.nu_fission_alpha += atom_density * micro.nu_fission_alpha;
+      p.macro_xs_.nu_fission_prompt += atom_density * micro.nu_fission_prompt;
+    }
   }
 }
 

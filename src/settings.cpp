@@ -98,6 +98,7 @@ double res_scat_energy_min {0.01};
 double res_scat_energy_max {1000.0};
 std::vector<std::string> res_scat_nuclides;
 RunMode run_mode {RunMode::UNSET};
+bool alpha_mode {false};
 std::unordered_set<int> sourcepoint_batch;
 std::unordered_set<int> statepoint_batch;
 TemperatureMethod temperature_method {TemperatureMethod::NEAREST};
@@ -112,7 +113,7 @@ int trigger_batch_interval {1};
 int verbosity {7};
 double weight_cutoff {0.25};
 double weight_survive {1.0};
-
+std::vector<double> mg_speeds;
 } // namespace settings
 
 //==============================================================================
@@ -123,6 +124,16 @@ void get_run_parameters(pugi::xml_node node_base)
 {
   using namespace settings;
   using namespace pugi;
+
+  // alpha (time eigenvalue) mode?
+  if (check_for_node(node_base, "alpha_mode")) {
+    alpha_mode = get_node_value_bool(node_base, "alpha_mode");
+    if (alpha_mode) {
+      if (settings::run_mode != RunMode::EIGENVALUE) {
+        fatal_error("Alpha mode has to be run in eigenvalue run_mode.");
+      }
+    }
+  }
 
   // Check number of particles
   if (!check_for_node(node_base, "particles")) {
@@ -168,6 +179,7 @@ void get_run_parameters(pugi::xml_node node_base)
     // Preallocate space for keff and entropy by generation
     int m = settings::n_max_batches * settings::gen_per_batch;
     simulation::k_generation.reserve(m);
+    simulation::alpha_generation.reserve(m);
     simulation::entropy.reserve(m);
 
     // Get the trigger information for keff
@@ -265,6 +277,11 @@ void read_settings_xml()
     } else if (temp_str == "ce" || temp_str == "continuous-energy") {
       run_CE = true;
     }
+  }
+
+  // Find if multigroup speeds are given
+  if (check_for_node(root, "mg_speeds")) {
+    mg_speeds = get_node_array<double>(root, "mg_speeds");
   }
 
   // Look for deprecated cross_sections.xml file in settings.xml
@@ -825,6 +842,7 @@ void free_memory_settings() {
   settings::statepoint_batch.clear();
   settings::sourcepoint_batch.clear();
   settings::res_scat_nuclides.clear();
+  settings::mg_speeds.clear();
 }
 
 //==============================================================================

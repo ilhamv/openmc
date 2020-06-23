@@ -95,8 +95,14 @@ create_fission_sites(Particle& p)
   double weight = settings::ufs_on ? ufs_get_weight(p) : 1.0;
 
   // Determine the expected number of neutrons produced
-  double nu_t = p.wgt_ / simulation::keff * weight *
-       p.macro_xs_.nu_fission / p.macro_xs_.total;
+  double nu_t;
+  if (settings::alpha_mode) {
+    nu_t = p.wgt_ / simulation::keff * weight *
+      p.macro_xs_.nu_fission_alpha / p.macro_xs_.total;
+  } else {
+    nu_t = p.wgt_ / simulation::keff * weight *
+      p.macro_xs_.nu_fission / p.macro_xs_.total;
+  }
 
   // Sample the number of neutrons produced
   int nu = static_cast<int>(nu_t);
@@ -216,12 +222,22 @@ absorption(Particle& p)
     p.wgt_last_ = p.wgt_;
 
     // Score implicit absorpion estimate of keff
-    p.keff_tally_absorption_ += p.wgt_absorb_ * p.macro_xs_.nu_fission /
-        p.macro_xs_.absorption;
+    if (settings::alpha_mode) {
+      p.keff_tally_absorption_ += p.wgt_absorb_ * p.macro_xs_.nu_fission_alpha /
+          p.macro_xs_.absorption;
+    } else {
+      p.keff_tally_absorption_ += p.wgt_absorb_ * p.macro_xs_.nu_fission /
+          p.macro_xs_.absorption;
+    }
   } else {
     if (p.macro_xs_.absorption > prn(p.current_seed()) * p.macro_xs_.total) {
-      p.keff_tally_absorption_ += p.wgt_ * p.macro_xs_.nu_fission /
-           p.macro_xs_.absorption;
+      if (settings::alpha_mode) {
+        p.keff_tally_absorption_ += p.wgt_ * p.macro_xs_.nu_fission_alpha /
+             p.macro_xs_.absorption;
+      } else {
+        p.keff_tally_absorption_ += p.wgt_ * p.macro_xs_.nu_fission /
+             p.macro_xs_.absorption;
+      }
       p.alive_ = false;
       p.event_ = TallyEvent::ABSORB;
     }

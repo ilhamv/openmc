@@ -20,6 +20,7 @@
 #include "openmc/mgxs_interface.h"
 #include "openmc/random_lcg.h"
 #include "openmc/settings.h"
+#include "openmc/simulation.h"
 #include "openmc/string_utils.h"
 
 
@@ -541,7 +542,19 @@ Mgxs::sample_fission_energy(int gin, int& dg, int& gout, uint64_t* seed)
   int tid = 0;
 #endif
   XsData* xs_t = &xs[cache[tid].t];
-  double nu_fission = xs_t->nu_fission(cache[tid].a, gin);
+  double nu_fission;
+  if (settings::alpha_mode) {
+    nu_fission = xs_t->prompt_nu_fission(cache[tid].a, gin);
+    // Add delayed nu
+    int J = data::mg.num_delayed_groups_;
+    for (int j = 0; j < J; j++){
+      double nu_d = xs_t->delayed_nu_fission(cache[tid].a, j, gin);
+      double lam  = xs_t->decay_rate(cache[tid].a, j);
+      nu_fission += lam/(lam + simulation::alpha_eff)*nu_d;
+    }
+  } else {
+    nu_fission = xs_t->nu_fission(cache[tid].a, gin);
+  }
 
   // Find the probability of having a prompt neutron
   double prob_prompt = xs_t->prompt_nu_fission(cache[tid].a, gin);
@@ -569,7 +582,12 @@ Mgxs::sample_fission_energy(int gin, int& dg, int& gout, uint64_t* seed)
 
     // get the delayed group
     for (dg = 0; dg < num_delayed_groups; ++dg) {
-      prob_prompt += xs_t->delayed_nu_fission(cache[tid].a, dg, gin);
+      if (settings::alpha_mode) {
+        double lam  = xs_t->decay_rate(cache[tid].a, dg);
+        prob_prompt += lam/(lam + simulation::alpha_eff)*xs_t->delayed_nu_fission(cache[tid].a, dg, gin);
+      } else {
+        prob_prompt += xs_t->delayed_nu_fission(cache[tid].a, dg, gin);
+      }
       if (xi_pd < prob_prompt) break;
     }
 
@@ -618,6 +636,24 @@ Mgxs::calculate_xs(Particle& p)
   p.macro_xs_.absorption = xs_t->absorption(cache[tid].a, p.g_);
   p.macro_xs_.nu_fission =
     fissionable ? xs_t->nu_fission(cache[tid].a, p.g_) : 0.;
+  if (settings::alpha_mode){
+    if (fissionable) {
+      p.macro_xs_.nu_fission_prompt = 
+        xs_t->prompt_nu_fission(cache[tid].a, p.g_);
+      p.macro_xs_.nu_fission_alpha  = 
+        xs_t->prompt_nu_fission(cache[tid].a, p.g_);
+      // Add delayed nu
+      int J = data::mg.num_delayed_groups_;
+      for (int j = 0; j < J; j++){
+        double nu_d = xs_t->delayed_nu_fission(cache[tid].a, j, p.g_);
+        double lam  = xs_t->decay_rate(cache[tid].a, j);
+        p.macro_xs_.nu_fission_alpha += lam/(lam + simulation::alpha_eff)*nu_d;
+      }
+    } else {
+      p.macro_xs_.nu_fission_alpha  = 0.0; 
+      p.macro_xs_.nu_fission_prompt = 0.0;
+    }
+  }
 }
 
 //==============================================================================

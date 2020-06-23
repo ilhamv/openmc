@@ -25,6 +25,8 @@ class Settings:
 
     Attributes
     ----------
+    alpha_mode : bool
+        Running alpha (time eigenvalue) mode?
     batches : int
         Number of batches to simulate
     confidence_intervals : bool
@@ -97,6 +99,8 @@ class Settings:
         .. versionadded:: 0.12
     max_order : None or int
         Maximum scattering order to apply globally when in multi-group mode.
+    mg_speeds : list
+        Speeds for multigroup mode
     no_reduce : bool
         Indicate that all user-defined and global tallies should not be reduced
         across processes in a parallel calculation.
@@ -192,6 +196,7 @@ class Settings:
 
     def __init__(self):
         self._run_mode = RunMode.EIGENVALUE
+        self._alpha_mode = None
         self._batches = None
         self._generations_per_batch = None
         self._inactive = None
@@ -203,6 +208,7 @@ class Settings:
         # Energy mode subelement
         self._energy_mode = None
         self._max_order = None
+        self._mg_speeds = None
 
         # Source subelement
         self._source = cv.CheckedList(Source, 'source distributions')
@@ -264,6 +270,10 @@ class Settings:
         return self._run_mode.value
 
     @property
+    def alpha_mode(self):
+        return self._alpha_mode
+
+    @property
     def batches(self):
         return self._batches
 
@@ -294,6 +304,10 @@ class Settings:
     @property
     def energy_mode(self):
         return self._energy_mode
+
+    @property
+    def mg_speeds(self):
+        return self._mg_speeds
 
     @property
     def max_order(self):
@@ -430,6 +444,11 @@ class Settings:
             if mode.value == run_mode:
                 self._run_mode = mode
 
+    @alpha_mode.setter
+    def alpha_mode(self, alpha_mode):
+        cv.check_type('alpha mode', alpha_mode, bool)
+        self._alpha_mode = alpha_mode
+
     @batches.setter
     def batches(self, batches):
         cv.check_type('batches', batches, Integral)
@@ -501,6 +520,11 @@ class Settings:
         cv.check_value('energy mode', energy_mode,
                     ['continuous-energy', 'multi-group'])
         self._energy_mode = energy_mode
+
+    @mg_speeds.setter
+    def mg_speeds(self, mg_speeds):
+        cv.check_type('mg_speeds', mg_speeds, Iterable, float)
+        self._mg_speeds = mg_speeds
 
     @max_order.setter
     def max_order(self, max_order):
@@ -788,6 +812,11 @@ class Settings:
         elem = ET.SubElement(root, "run_mode")
         elem.text = self._run_mode.value
 
+    def _create_alpha_mode_subelement(self, root):
+        if self._alpha_mode is not None:
+            element = ET.SubElement(root, "alpha_mode")
+            element.text = str(self._alpha_mode).lower()
+
     def _create_batches_subelement(self, root):
         if self._batches is not None:
             element = ET.SubElement(root, "batches")
@@ -829,6 +858,11 @@ class Settings:
         if self._energy_mode is not None:
             element = ET.SubElement(root, "energy_mode")
             element.text = str(self._energy_mode)
+
+    def _create_mg_speeds_subelement(self, root):
+        if self._mg_speeds is not None:
+            element = ET.SubElement(root, "mg_speeds")
+            element.text = ' '.join(map(str, self._mg_speeds))
 
     def _create_max_order_subelement(self, root):
         if self._max_order is not None:
@@ -1155,6 +1189,11 @@ class Settings:
         if text is not None:
             self.energy_mode = text
 
+    def _mg_speeds_from_xml_element(self, root):
+        text = get_text(root, 'mg_speeds')
+        if text is not None:
+            self.mg_speeds = [int(x) for x in text.split()]
+
     def _max_order_from_xml_element(self, root):
         text = get_text(root, 'max_order')
         if text is not None:
@@ -1327,6 +1366,7 @@ class Settings:
         root_element = ET.Element("settings")
 
         self._create_run_mode_subelement(root_element)
+        self._create_alpha_mode_subelement(root_element)
         self._create_particles_subelement(root_element)
         self._create_batches_subelement(root_element)
         self._create_inactive_subelement(root_element)
@@ -1341,6 +1381,7 @@ class Settings:
         self._create_confidence_intervals(root_element)
         self._create_electron_treatment_subelement(root_element)
         self._create_energy_mode_subelement(root_element)
+        self._create_mg_speeds_subelement(root_element)
         self._create_max_order_subelement(root_element)
         self._create_photon_transport_subelement(root_element)
         self._create_ptables_subelement(root_element)
@@ -1414,6 +1455,7 @@ class Settings:
         settings._confidence_intervals_from_xml_element(root)
         settings._electron_treatment_from_xml_element(root)
         settings._energy_mode_from_xml_element(root)
+        settings._mg_speeds_from_xml_element(root)
         settings._max_order_from_xml_element(root)
         settings._photon_transport_from_xml_element(root)
         settings._ptables_from_xml_element(root)
