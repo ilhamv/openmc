@@ -95,6 +95,8 @@ extern "C" int openmc_statepoint_write(const char* filename, bool* write_source)
     write_attribute(file_id, "photon_transport", settings::photon_transport);
     write_dataset(file_id, "n_particles", settings::n_particles);
     write_dataset(file_id, "n_batches", settings::n_batches);
+    
+    write_attribute(file_id, "population_control", simulation::pct->label());
 
     // Write out current batch number
     write_dataset(file_id, "current_batch", simulation::current_batch);

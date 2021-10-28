@@ -206,6 +206,31 @@ void get_run_parameters(pugi::xml_node node_base)
       }
     }
   }
+
+  // Get Population Control Technique (PCT)
+  if (check_for_node(node_base, "population_control")) {
+    xml_node node_pct = node_base.child("population_control");
+    std::string temp_str = get_node_value(node_base, "population_control", 
+                                          true, true);
+    if (temp_str == "SS" || temp_str == "simple-sampling") {
+      simulation::pct = std::make_unique<PCTSimpleSampling>();
+    } else if (temp_str == "SR" || temp_str == "splitting-roulette") {
+      simulation::pct = std::make_unique<PCTSplittingRoulette>();
+    } else if (temp_str == "DD" || temp_str == "duplicate-discard") {
+      simulation::pct = std::make_unique<PCTDuplicateDiscard>();
+    } else if (temp_str == "CO" || temp_str == "comb" || 
+               temp_str == "combing") {
+      simulation::pct = std::make_unique<PCTCombing>();
+    } else if (temp_str == "CO-new" || temp_str == "comb-new" || 
+               temp_str == "combing-new") {
+      simulation::pct = std::make_unique<PCTNewCombing>();
+    } else {
+      fatal_error("Unrecognized population control type " + temp_str);
+    }
+  } else {
+    // No PCT specified, use the default
+    simulation::pct = std::make_unique<PCTSplittingRoulette>();
+  }
 }
 
 void read_settings_xml()

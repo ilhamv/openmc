@@ -71,6 +71,12 @@ element settings {
 
   element photon_transport { xsd:boolean }? &
 
+  element population_control { ( "SS"     | "simple-sampling" | 
+                                 "DD"     | "duplicate-discard" |
+                                 "SR"     | "splitting-roulette" |
+                                 "CO"     | "combing" | "comb" |
+                                 "CO-new" | "combing-new" | "comb-new" ) }? &
+
   element ptables { xsd:boolean }? &
 
   element dagmc { xsd:boolean }? &

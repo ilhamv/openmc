@@ -4,9 +4,11 @@
 #ifndef OPENMC_SIMULATION_H
 #define OPENMC_SIMULATION_H
 
+#include "openmc/memory.h" // unique_ptr
 #include "openmc/mesh.h"
 #include "openmc/particle.h"
 #include "openmc/vector.h"
+#include "openmc/pct.h"
 
 #include <cstdint>
 
@@ -46,6 +48,8 @@ extern const RegularMesh* ufs_mesh;
 
 extern vector<double> k_generation;
 extern vector<int64_t> work_index;
+
+extern unique_ptr<PCT> pct; //!< population control technique (PCT)
 
 } // namespace simulation
 

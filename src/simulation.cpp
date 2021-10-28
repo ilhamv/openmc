@@ -8,6 +8,7 @@
 #include "openmc/event.h"
 #include "openmc/geometry_aux.h"
 #include "openmc/material.h"
+#include "openmc/memory.h" // unique_ptr
 #include "openmc/message_passing.h"
 #include "openmc/nuclide.h"
 #include "openmc/output.h"
@@ -277,6 +278,8 @@ const RegularMesh* ufs_mesh {nullptr};
 vector<double> k_generation;
 vector<int64_t> work_index;
 
+unique_ptr<PCT> pct; //!< population control technique (PCT)
+
 } // namespace simulation
 
 //==============================================================================
@@ -291,6 +294,13 @@ void allocate_banks()
 
     // Allocate fission bank
     init_fission_bank(3 * simulation::work_per_rank);
+
+    // Allocate sample bank
+    simulation::sample_bank.resize(3 * simulation::work_per_rank);
+
+    // Allocate site flags and counters of population control technique
+    // (Only for Simple Sampling and Duplicate-Discard)
+    simulation::pct->allocate();
   }
 
   if (settings::surf_source_write) {
@@ -457,6 +467,10 @@ void finalize_generation()
     if (mpi::master && settings::verbosity >= 7) {
       print_generation();
     }
+
+    // Use k_generation instead of the current running average
+    int idx = overall_generation() - 1;
+    simulation::keff = simulation::k_generation[idx];
   }
 }
 

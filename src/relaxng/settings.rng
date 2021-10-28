@@ -322,6 +322,23 @@
         <data type="boolean"/>
       </element>
     </optional>
+      <element name="population_control">
+        <choice>
+          <value>SS</value>
+          <value>simple-sampling</value>
+          <value>DD</value>
+          <value>duplicate-discard</value>
+          <value>SR</value>
+          <value>splitting-roulette</value>
+          <value>CO</value>
+          <value>combing</value>
+          <value>comb</value>
+          <value>CO-new</value>
+          <value>combing-new</value>
+          <value>comb-new</value>
+          <value>SR-fix</value>
+        </choice>
+      </element>
     <optional>
       <element name="ptables">
         <data type="boolean"/>

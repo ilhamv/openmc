@@ -110,6 +110,9 @@ class Settings:
         Number of particles per generation
     photon_transport : bool
         Whether to use photon transport.
+    population_control : {'simple-sampling', 'duplicate-discard', 'combing', 'combing-new', 'splitting-roulette'}
+        Population control technique used in eigenvalue (fission-census) or 
+        fixed-source (time-census) mode.
     ptables : bool
         Determine whether probability tables are used.
     resonance_scattering : dict
@@ -272,6 +275,9 @@ class Settings:
         self._event_based = None
         self._max_particles_in_flight = None
         self._write_initial_source = None
+        
+        # Population control
+        self._population_control = None
 
     @property
     def run_mode(self):
@@ -444,6 +450,10 @@ class Settings:
     @property
     def write_initial_source(self):
         return self._write_initial_source
+
+    @property
+    def population_control(self):
+        return self._population_control
 
     @run_mode.setter
     def run_mode(self, run_mode):
@@ -835,6 +845,13 @@ class Settings:
         cv.check_type('write initial source', value, bool)
         self._write_initial_source = value
 
+    @population_control.setter
+    def population_control(self, population_control):
+        cv.check_value('population control', population_control,
+                    ['simple-sampling', 'duplicate-discard', 'combing', 
+                     'combing-new', 'splitting-roulette'])
+        self._population_control = population_control
+
     def _create_run_mode_subelement(self, root):
         elem = ET.SubElement(root, "run_mode")
         elem.text = self._run_mode.value
@@ -1128,6 +1145,11 @@ class Settings:
             elem = ET.SubElement(root, "write_initial_source")
             elem.text = str(self._write_initial_source).lower()
 
+    def _create_population_control_subelement(self, root):
+        if self._population_control is not None:
+            element = ET.SubElement(root, "population_control")
+            element.text = str(self._population_control)
+
     def _eigenvalue_from_xml_element(self, root):
         elem = root.find('eigenvalue')
         if elem is not None:
@@ -1410,6 +1432,11 @@ class Settings:
         if text is not None:
             self.write_initial_source = text in ('true', '1')
 
+    def _population_control_from_xml_element(self, root):
+        text = get_text(root, 'population_control')
+        if text is not None:
+            self.population_control = text
+
     def export_to_xml(self, path='settings.xml'):
         """Export simulation settings to an XML file.
 
@@ -1464,6 +1491,7 @@ class Settings:
         self._create_material_cell_offsets_subelement(root_element)
         self._create_log_grid_bins_subelement(root_element)
         self._create_write_initial_source_subelement(root_element)
+        self._create_population_control_subelement(root_element)
 
         # Clean the indentation in the file to be user-readable
         clean_indentation(root_element)
@@ -1538,6 +1566,7 @@ class Settings:
         settings._material_cell_offsets_from_xml_element(root)
         settings._log_grid_bins_from_xml_element(root)
         settings._write_initial_source_from_xml_element(root)
+        settings._population_control_from_xml_element(root)
 
         # TODO: Get volume calculations
 

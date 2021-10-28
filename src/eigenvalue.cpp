@@ -74,95 +74,9 @@ void synchronize_bank()
 {
   simulation::time_bank.start();
 
-  // In order to properly understand the fission bank algorithm, you need to
-  // think of the fission and source bank as being one global array divided
-  // over multiple processors. At the start, each processor has a random amount
-  // of fission bank sites -- each processor needs to know the total number of
-  // sites in order to figure out the probability for selecting
-  // sites. Furthermore, each proc also needs to know where in the 'global'
-  // fission bank its own sites starts in order to ensure reproducibility by
-  // skipping ahead to the proper seed.
-
-#ifdef OPENMC_MPI
-  int64_t start = 0;
-  int64_t n_bank = simulation::fission_bank.size();
-  MPI_Exscan(&n_bank, &start, 1, MPI_INT64_T, MPI_SUM, mpi::intracomm);
-
-  // While we would expect the value of start on rank 0 to be 0, the MPI
-  // standard says that the receive buffer on rank 0 is undefined and not
-  // significant
-  if (mpi::rank == 0)
-    start = 0;
-
-  int64_t finish = start + simulation::fission_bank.size();
-  int64_t total = finish;
-  MPI_Bcast(&total, 1, MPI_INT64_T, mpi::n_procs - 1, mpi::intracomm);
-
-#else
-  int64_t start = 0;
-  int64_t finish = simulation::fission_bank.size();
-  int64_t total = finish;
-#endif
-
-  // If there are not that many particles per generation, it's possible that no
-  // fission sites were created at all on a single processor. Rather than add
-  // extra logic to treat this circumstance, we really want to ensure the user
-  // runs enough particles to avoid this in the first place.
-
-  if (simulation::fission_bank.size() == 0) {
-    fatal_error(
-      "No fission sites banked on MPI rank " + std::to_string(mpi::rank));
-  }
-
-  // Make sure all processors start at the same point for random sampling. Then
-  // skip ahead in the sequence using the starting index in the 'global'
-  // fission bank for each processor.
-
-  int64_t id = simulation::total_gen + overall_generation();
-  uint64_t seed = init_seed(id, STREAM_TRACKING);
-  advance_prn_seed(start, &seed);
-
-  // Determine how many fission sites we need to sample from the source bank
-  // and the probability for selecting a site.
-
-  int64_t sites_needed;
-  if (total < settings::n_particles) {
-    sites_needed = settings::n_particles % total;
-  } else {
-    sites_needed = settings::n_particles;
-  }
-  double p_sample = static_cast<double>(sites_needed) / total;
-
-  simulation::time_bank_sample.start();
-
-  // ==========================================================================
-  // SAMPLE N_PARTICLES FROM FISSION BANK AND PLACE IN TEMP_SITES
-
-  // Allocate temporary source bank -- we don't really know how many fission
-  // sites were created, so overallocate by a factor of 3
-  int64_t index_temp = 0;
-  vector<SourceSite> temp_sites(3 * simulation::work_per_rank);
-
-  for (int64_t i = 0; i < simulation::fission_bank.size(); i++) {
-    const auto& site = simulation::fission_bank[i];
-
-    // If there are less than n_particles particles banked, automatically add
-    // int(n_particles/total) sites to temp_sites. For example, if you need
-    // 1000 and 300 were banked, this would add 3 source sites per banked site
-    // and the remaining 100 would be randomly sampled.
-    if (total < settings::n_particles) {
-      for (int64_t j = 1; j <= settings::n_particles / total; ++j) {
-        temp_sites[index_temp] = site;
-        ++index_temp;
-      }
-    }
-
-    // Randomly sample sites needed
-    if (prn(&seed) < p_sample) {
-      temp_sites[index_temp] = site;
-      ++index_temp;
-    }
-  }
+  // Perform population control
+  int64_t n_sample;
+  simulation::pct->sample(n_sample);
 
   // At this point, the sampling of source sites is done and now we need to
   // figure out where to send source sites. Since it is possible that one
@@ -170,11 +84,12 @@ void synchronize_bank()
   // neighboring processors, we have to perform an ALLGATHER to determine the
   // indices for all processors
 
+  int64_t start, finish;
 #ifdef OPENMC_MPI
   // First do an exclusive scan to get the starting indices for
   start = 0;
-  MPI_Exscan(&index_temp, &start, 1, MPI_INT64_T, MPI_SUM, mpi::intracomm);
-  finish = start + index_temp;
+  MPI_Exscan(&n_sample, &start, 1, MPI_INT64_T, MPI_SUM, mpi::intracomm);
+  finish = start + n_sample;
 
   // Allocate space for bank_position if this hasn't been done yet
   int64_t bank_position[mpi::n_procs];
@@ -182,27 +97,29 @@ void synchronize_bank()
     &start, 1, MPI_INT64_T, bank_position, 1, MPI_INT64_T, mpi::intracomm);
 #else
   start = 0;
-  finish = index_temp;
+  finish = n_sample;
 #endif
 
   // Now that the sampling is complete, we need to ensure that we have exactly
   // n_particles source sites. The way this is done in a reproducible manner is
-  // to adjust only the source sites on the last processor.
+  // to adjust only the source sites on the last processor. 
+  // This fix-up introduces bias to the impacted particles in the fission bank.
+  // However, this only applies to PCTSplittingRoulette.
 
   if (mpi::rank == mpi::n_procs - 1) {
     if (finish > settings::n_particles) {
       // If we have extra sites sampled, we will simply discard the extra
       // ones on the last processor
-      index_temp = settings::n_particles - start;
+      n_sample = settings::n_particles - start;
 
     } else if (finish < settings::n_particles) {
       // If we have too few sites, repeat sites from the very end of the
       // fission bank
-      sites_needed = settings::n_particles - finish;
+      int64_t sites_needed = settings::n_particles - finish;
       for (int i = 0; i < sites_needed; ++i) {
         int i_bank = simulation::fission_bank.size() - sites_needed + i;
-        temp_sites[index_temp] = simulation::fission_bank[i_bank];
-        ++index_temp;
+        simulation::sample_bank[n_sample] = simulation::fission_bank[i_bank];
+        ++n_sample;
       }
     }
 
@@ -235,7 +152,7 @@ void synchronize_bank()
       // process
       if (neighbor != mpi::rank) {
         requests.emplace_back();
-        MPI_Isend(&temp_sites[index_local], static_cast<int>(n),
+        MPI_Isend(&simulation::sample_bank[index_local], static_cast<int>(n),
           mpi::source_site, neighbor, mpi::rank, mpi::intracomm,
           &requests.back());
       }
@@ -291,11 +208,12 @@ void synchronize_bank()
 
     } else {
       // If the source sites are on this procesor, we can simply copy them
-      // from the temp_sites bank
+      // from the sample_bank
 
-      index_temp = start - bank_position[mpi::rank];
-      std::copy(&temp_sites[index_temp], &temp_sites[index_temp + n],
-        &simulation::source_bank[index_local]);
+      n_sample = start - bank_position[mpi::rank];
+      std::copy(&simulation::sample_bank[n_sample], 
+                &simulation::sample_bank[n_sample + n],
+                &simulation::source_bank[index_local]);
     }
 
     // Increment all indices
@@ -312,8 +230,9 @@ void synchronize_bank()
   MPI_Waitall(n_request, requests.data(), MPI_STATUSES_IGNORE);
 
 #else
-  std::copy(temp_sites.data(), temp_sites.data() + settings::n_particles,
-    simulation::source_bank.begin());
+  std::copy(simulation::sample_bank.data(), 
+            simulation::sample_bank.data() + settings::n_particles,
+            simulation::source_bank.begin());
 #endif
 
   simulation::time_bank_sendrecv.stop();

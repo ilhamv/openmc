@@ -16,6 +16,7 @@ namespace openmc {
 namespace simulation {
 
 vector<SourceSite> source_bank;
+vector<SourceSite> sample_bank;
 
 SharedArray<SourceSite> surf_source_bank;
 
