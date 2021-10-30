@@ -8,7 +8,7 @@
 #include "openmc/mesh.h"
 #include "openmc/particle.h"
 #include "openmc/vector.h"
-#include "openmc/pct.h"
+#include "openmc/population_control.h"
 
 #include <cstdint>
 

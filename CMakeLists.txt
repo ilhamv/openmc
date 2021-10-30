@@ -304,12 +304,12 @@ list(APPEND libopenmc_SOURCES
   src/particle.cpp
   src/particle_data.cpp
   src/particle_restart.cpp
-  src/pct.cpp
   src/photon.cpp
   src/physics.cpp
   src/physics_common.cpp
   src/physics_mg.cpp
   src/plot.cpp
+  src/population_control.cpp
   src/position.cpp
   src/progress_bar.cpp
   src/random_dist.cpp

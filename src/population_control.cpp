@@ -6,7 +6,7 @@
 #include "openmc/bank.h"
 #include "openmc/error.h"
 #include "openmc/message_passing.h"
-#include "openmc/pct.h"
+#include "openmc/population_control.h"
 #include "openmc/settings.h"
 #include "openmc/simulation.h"
 
