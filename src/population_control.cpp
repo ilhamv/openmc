@@ -87,12 +87,11 @@ void PCT::global_sync( int64_t& start, int64_t& total) const {
 //=====================
 
 void PCTSimpleSampling::sample(int64_t& n_sample) {
-  int64_t start, end, total, idx, idx_local;
+  int64_t start, total, idx, idx_local;
   n_sample = 0;
   
   // Synchronize "global" fission bank
   global_sync(start, total);
-  end = start + simulation::fission_bank.size();
   
   // Make sure all processors start at the same point for random sampling. Then
   // skip ahead in the sequence using the starting index in the 'global'
@@ -104,12 +103,11 @@ void PCTSimpleSampling::sample(int64_t& n_sample) {
   // Sample n_particles from fission_bank
   // For reproducibility, we first count how many times each site is sampled
   for (int64_t i = 0; i < settings::n_particles; i++) {
-    idx = floor(prn(&seed)*total);
+    idx = floor(prn(&seed)*total) - start;
 
     // Check if it is local
-    if (start <= idx && idx < end) {
-      idx_local = idx - start;
-      count[idx_local]++;
+    if (0 <= idx && idx < simulation::fission_bank.size()) {
+      count[idx]++;
     }
   }
 
@@ -135,7 +133,6 @@ void PCTDuplicateDiscard::sample(int64_t& n_sample) {
   
   // Synchronize "global" fission bank
   global_sync(start, total);
-  end = start + simulation::fission_bank.size();
   
   // Make sure all processors start at the same point for random sampling. Then
   // skip ahead in the sequence using the starting index in the 'global'
@@ -166,12 +163,11 @@ void PCTDuplicateDiscard::sample(int64_t& n_sample) {
     
     // Count the additional samples
     for (int64_t i = 0; i < N_sample; i++) {
-      idx = floor(prn(&seed)*total);
+      idx = floor(prn(&seed)*total) - start;
 
       // Check if it is local
-      if (start <= idx && idx < end) {
-        idx_local = idx - start;
-        count[idx_local]++;
+      if (0 <= idx && idx < simulation::fission_bank.size()) {
+        count[idx]++;
       }
     }
     
@@ -242,21 +238,21 @@ void PCTSplittingRoulette::sample(int64_t& n_sample) {
   uint64_t seed = init_seed(id, STREAM_TRACKING);
   advance_prn_seed(start, &seed);
 
+  // Sampling probability
+  const double p = static_cast<double>(settings::n_particles)/total;
+  // Number of splittings
+  const int64_t n_split = std::floor(p);
+  // Roulette surviving probability
+  const double p_survive = p - n_split;
+
   // Perform splitting-roulette to all particles in fission_bank
   for (int64_t i = 0; i < simulation::fission_bank.size(); i++) {
     const auto& site = simulation::fission_bank[i];
-
-    // Survivng probability
-    double p_survive = static_cast<double>(settings::n_particles)/total;
-
     // Splitting
-    const int64_t n_survive = std::floor(p_survive);
-    for (int64_t j = 0; j < n_survive; ++j) {
+    for (int64_t j = 0; j < n_split; ++j) {
       simulation::sample_bank[n_sample] = site;
       ++n_sample;
     }
-    p_survive -= static_cast<double>(n_survive);
-
     // Russian roulette
     if (prn(&seed) < p_survive) {
       simulation::sample_bank[n_sample] = site;
@@ -305,7 +301,7 @@ void PCTCombing::sample(int64_t& n_sample) {
 }
 
 
-// New Combing (COX) [Booth 1996]
+// New Combing (COX) [Ajami 2021]
 //===============================
 
 void PCTNewCombing::sample(int64_t& n_sample) {
