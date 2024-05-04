@@ -205,10 +205,10 @@ void PCTDuplicateDiscard::sample(int64_t& n_sample) {
     }
 
     // Copy the un-discarded sites
-    for (int64_t i = start; i < end; i++) {
-      if (!discard_flag[i]) {
-        idx_local = i - start;
-        const auto& site = simulation::fission_bank[idx_local];
+    for (int64_t i = 0; i < simulation::fission_bank.size(); i++) {
+      idx = start + i;
+      if (!discard_flag[idx]) {
+        const auto& site = simulation::fission_bank[i];
         simulation::sample_bank[n_sample] = site;
         ++n_sample;
       }
