@@ -110,11 +110,11 @@ public:
   //! \param[in] time Incident time of the particle
   //!   (currently used only by axis-aligned planes)
   //! \return Outgoing direction of the ray
-  virtual Direction reflect(
-    Position r, Direction u, GeometryState* p = nullptr, double time = 0.0) const;
+  virtual Direction reflect(Position r, Direction u, GeometryState* p = nullptr,
+    double time = 0.0) const;
 
-  virtual Direction diffuse_reflect(
-    Position r, Direction u, uint64_t* seed, GeometryState* p = nullptr, double time = 0.0) const;
+  virtual Direction diffuse_reflect(Position r, Direction u, uint64_t* seed,
+    GeometryState* p = nullptr, double time = 0.0) const;
 
   //! Evaluate the equation describing the surface.
   //!
@@ -134,7 +134,8 @@ public:
   //!   (currently used only by axis-aligned planes)
   //! \param[in] speed The speed of the particle
   //!   (currently used only by axis-aligned planes)
-  virtual double distance(Position r, Direction u, bool coincident, double time = 0.0, double speed = 0.0) const = 0;
+  virtual double distance(Position r, Direction u, bool coincident,
+    double time = 0.0, double speed = 0.0) const = 0;
 
   //! Compute the local outward normal direction of the surface.
   //! \param r A 3D Cartesian coordinate.
@@ -168,7 +169,8 @@ class SurfaceXPlane : public CSGSurface {
 public:
   explicit SurfaceXPlane(pugi::xml_node surf_node);
   double evaluate(Position r, double time = 0.0) const override;
-  double distance(Position r, Direction u, bool coincident, double time = 0.0, double speed = 0.0) const override;
+  double distance(Position r, Direction u, bool coincident, double time = 0.0,
+    double speed = 0.0) const override;
   Direction normal(Position r) const override;
   void to_hdf5_inner(hid_t group_id) const override;
   BoundingBox bounding_box(bool pos_side) const override;
@@ -188,7 +190,8 @@ class SurfaceYPlane : public CSGSurface {
 public:
   explicit SurfaceYPlane(pugi::xml_node surf_node);
   double evaluate(Position r, double time = 0.0) const override;
-  double distance(Position r, Direction u, bool coincident, double time = 0.0, double speed = 0.0) const override;
+  double distance(Position r, Direction u, bool coincident, double time = 0.0,
+    double speed = 0.0) const override;
   Direction normal(Position r) const override;
   void to_hdf5_inner(hid_t group_id) const override;
   BoundingBox bounding_box(bool pos_side) const override;
@@ -208,7 +211,8 @@ class SurfaceZPlane : public CSGSurface {
 public:
   explicit SurfaceZPlane(pugi::xml_node surf_node);
   double evaluate(Position r, double time = 0.0) const override;
-  double distance(Position r, Direction u, bool coincident, double time = 0.0, double speed = 0.0) const override;
+  double distance(Position r, Direction u, bool coincident, double time = 0.0,
+    double speed = 0.0) const override;
   Direction normal(Position r) const override;
   void to_hdf5_inner(hid_t group_id) const override;
   BoundingBox bounding_box(bool pos_side) const override;
@@ -228,7 +232,8 @@ class SurfacePlane : public CSGSurface {
 public:
   explicit SurfacePlane(pugi::xml_node surf_node);
   double evaluate(Position r, double time = 0.0) const override;
-  double distance(Position r, Direction u, bool coincident, double time = 0.0, double speed = 0.0) const override;
+  double distance(Position r, Direction u, bool coincident, double time = 0.0,
+    double speed = 0.0) const override;
   Direction normal(Position r) const override;
   void to_hdf5_inner(hid_t group_id) const override;
 
@@ -246,7 +251,8 @@ class SurfaceXCylinder : public CSGSurface {
 public:
   explicit SurfaceXCylinder(pugi::xml_node surf_node);
   double evaluate(Position r, double time = 0.0) const override;
-  double distance(Position r, Direction u, bool coincident, double time = 0.0, double speed = 0.0) const override;
+  double distance(Position r, Direction u, bool coincident, double time = 0.0,
+    double speed = 0.0) const override;
   Direction normal(Position r) const override;
   void to_hdf5_inner(hid_t group_id) const override;
   BoundingBox bounding_box(bool pos_side) const override;
@@ -265,7 +271,8 @@ class SurfaceYCylinder : public CSGSurface {
 public:
   explicit SurfaceYCylinder(pugi::xml_node surf_node);
   double evaluate(Position r, double time = 0.0) const override;
-  double distance(Position r, Direction u, bool coincident, double time = 0.0, double speed = 0.0) const override;
+  double distance(Position r, Direction u, bool coincident, double time = 0.0,
+    double speed = 0.0) const override;
   Direction normal(Position r) const override;
   void to_hdf5_inner(hid_t group_id) const override;
   BoundingBox bounding_box(bool pos_side) const override;
@@ -284,7 +291,8 @@ class SurfaceZCylinder : public CSGSurface {
 public:
   explicit SurfaceZCylinder(pugi::xml_node surf_node);
   double evaluate(Position r, double time = 0.0) const override;
-  double distance(Position r, Direction u, bool coincident, double time = 0.0, double speed = 0.0) const override;
+  double distance(Position r, Direction u, bool coincident, double time = 0.0,
+    double speed = 0.0) const override;
   Direction normal(Position r) const override;
   void to_hdf5_inner(hid_t group_id) const override;
   BoundingBox bounding_box(bool pos_side) const override;
@@ -303,7 +311,8 @@ class SurfaceSphere : public CSGSurface {
 public:
   explicit SurfaceSphere(pugi::xml_node surf_node);
   double evaluate(Position r, double time = 0.0) const override;
-  double distance(Position r, Direction u, bool coincident, double time = 0.0, double speed = 0.0) const override;
+  double distance(Position r, Direction u, bool coincident, double time = 0.0,
+    double speed = 0.0) const override;
   Direction normal(Position r) const override;
   void to_hdf5_inner(hid_t group_id) const override;
   BoundingBox bounding_box(bool pos_side) const override;
@@ -322,7 +331,8 @@ class SurfaceXCone : public CSGSurface {
 public:
   explicit SurfaceXCone(pugi::xml_node surf_node);
   double evaluate(Position r, double time = 0.0) const override;
-  double distance(Position r, Direction u, bool coincident, double time = 0.0, double speed = 0.0) const override;
+  double distance(Position r, Direction u, bool coincident, double time = 0.0,
+    double speed = 0.0) const override;
   Direction normal(Position r) const override;
   void to_hdf5_inner(hid_t group_id) const override;
 
@@ -340,7 +350,8 @@ class SurfaceYCone : public CSGSurface {
 public:
   explicit SurfaceYCone(pugi::xml_node surf_node);
   double evaluate(Position r, double time = 0.0) const override;
-  double distance(Position r, Direction u, bool coincident, double time = 0.0, double speed = 0.0) const override;
+  double distance(Position r, Direction u, bool coincident, double time = 0.0,
+    double speed = 0.0) const override;
   Direction normal(Position r) const override;
   void to_hdf5_inner(hid_t group_id) const override;
 
@@ -358,7 +369,8 @@ class SurfaceZCone : public CSGSurface {
 public:
   explicit SurfaceZCone(pugi::xml_node surf_node);
   double evaluate(Position r, double time = 0.0) const override;
-  double distance(Position r, Direction u, bool coincident, double time = 0.0, double speed = 0.0) const override;
+  double distance(Position r, Direction u, bool coincident, double time = 0.0,
+    double speed = 0.0) const override;
   Direction normal(Position r) const override;
   void to_hdf5_inner(hid_t group_id) const override;
 
@@ -376,7 +388,8 @@ class SurfaceQuadric : public CSGSurface {
 public:
   explicit SurfaceQuadric(pugi::xml_node surf_node);
   double evaluate(Position r, double time = 0.0) const override;
-  double distance(Position r, Direction u, bool coincident, double time = 0.0, double speed = 0.0) const override;
+  double distance(Position r, Direction u, bool coincident, double time = 0.0,
+    double speed = 0.0) const override;
   Direction normal(Position r) const override;
   void to_hdf5_inner(hid_t group_id) const override;
 
@@ -394,7 +407,8 @@ class SurfaceXTorus : public CSGSurface {
 public:
   explicit SurfaceXTorus(pugi::xml_node surf_node);
   double evaluate(Position r, double time = 0.0) const override;
-  double distance(Position r, Direction u, bool coincident, double time = 0.0, double speed = 0.0) const override;
+  double distance(Position r, Direction u, bool coincident, double time = 0.0,
+    double speed = 0.0) const override;
   Direction normal(Position r) const override;
   void to_hdf5_inner(hid_t group_id) const override;
 
@@ -411,7 +425,8 @@ class SurfaceYTorus : public CSGSurface {
 public:
   explicit SurfaceYTorus(pugi::xml_node surf_node);
   double evaluate(Position r, double time = 0.0) const override;
-  double distance(Position r, Direction u, bool coincident, double time = 0.0, double speed = 0.0) const override;
+  double distance(Position r, Direction u, bool coincident, double time = 0.0,
+    double speed = 0.0) const override;
   Direction normal(Position r) const override;
   void to_hdf5_inner(hid_t group_id) const override;
 
@@ -428,7 +443,8 @@ class SurfaceZTorus : public CSGSurface {
 public:
   explicit SurfaceZTorus(pugi::xml_node surf_node);
   double evaluate(Position r, double time = 0.0) const override;
-  double distance(Position r, Direction u, bool coincident, double time = 0.0, double speed = 0.0) const override;
+  double distance(Position r, Direction u, bool coincident, double time = 0.0,
+    double speed = 0.0) const override;
   Direction normal(Position r) const override;
   void to_hdf5_inner(hid_t group_id) const override;
 
