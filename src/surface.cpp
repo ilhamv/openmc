@@ -302,10 +302,11 @@ SurfaceXPlane::SurfaceXPlane(pugi::xml_node surf_node) : CSGSurface(surf_node)
   read_coeffs(surf_node, id_, {&x0_});
 
   moving_ = false;
-  if (check_for_node(surf_node, "moving_speeds") && check_for_node(surf_node, "moving_durations")) {
+  if (check_for_node(surf_node, "moving_speeds") &&
+      check_for_node(surf_node, "moving_durations")) {
     moving_ = true;
 
-    auto speed =  get_node_array<double>(surf_node, "moving_speeds");
+    auto speed = get_node_array<double>(surf_node, "moving_speeds");
     auto duration = get_node_array<double>(surf_node, "moving_durations");
 
     const int N = speed.size() + 2;
@@ -315,9 +316,9 @@ SurfaceXPlane::SurfaceXPlane(pugi::xml_node surf_node) : CSGSurface(surf_node)
 
     x_[0] = x0_;
     t_[0] = 0.0;
-    
+
     for (int i = 0; i < N - 2; i++) {
-      x_[i+1] = x_[i] + speed[i] * duration[i];
+      x_[i + 1] = x_[i] + speed[i] * duration[i];
     }
 
     x_[N - 1] = x_[N - 2];
@@ -379,12 +380,13 @@ BoundingBox SurfaceXPlane::bounding_box(bool pos_side) const
 SurfaceYPlane::SurfaceYPlane(pugi::xml_node surf_node) : CSGSurface(surf_node)
 {
   read_coeffs(surf_node, id_, {&y0_});
-  
+
   moving_ = false;
-  if (check_for_node(surf_node, "moving_speeds") && check_for_node(surf_node, "moving_durations")) {
+  if (check_for_node(surf_node, "moving_speeds") &&
+      check_for_node(surf_node, "moving_durations")) {
     moving_ = true;
 
-    auto speed =  get_node_array<double>(surf_node, "moving_speeds");
+    auto speed = get_node_array<double>(surf_node, "moving_speeds");
     auto duration = get_node_array<double>(surf_node, "moving_durations");
 
     const int N = speed.size() + 2;
@@ -394,9 +396,9 @@ SurfaceYPlane::SurfaceYPlane(pugi::xml_node surf_node) : CSGSurface(surf_node)
 
     y_[0] = y0_;
     t_[0] = 0.0;
-    
+
     for (int i = 0; i < N - 2; i++) {
-      y_[i+1] = y_[i] + speed[i] * duration[i];
+      y_[i + 1] = y_[i] + speed[i] * duration[i];
     }
 
     y_[N - 1] = y_[N - 2];
@@ -458,12 +460,13 @@ BoundingBox SurfaceYPlane::bounding_box(bool pos_side) const
 SurfaceZPlane::SurfaceZPlane(pugi::xml_node surf_node) : CSGSurface(surf_node)
 {
   read_coeffs(surf_node, id_, {&z0_});
-  
+
   moving_ = false;
-  if (check_for_node(surf_node, "moving_speeds") && check_for_node(surf_node, "moving_durations")) {
+  if (check_for_node(surf_node, "moving_speeds") &&
+      check_for_node(surf_node, "moving_durations")) {
     moving_ = true;
 
-    auto speed =  get_node_array<double>(surf_node, "moving_speeds");
+    auto speed = get_node_array<double>(surf_node, "moving_speeds");
     auto duration = get_node_array<double>(surf_node, "moving_durations");
 
     const int N = speed.size() + 2;
@@ -473,9 +476,9 @@ SurfaceZPlane::SurfaceZPlane(pugi::xml_node surf_node) : CSGSurface(surf_node)
 
     z_[0] = z0_;
     t_[0] = 0.0;
-    
+
     for (int i = 0; i < N - 2; i++) {
-      z_[i+1] = z_[i] + speed[i] * duration[i];
+      z_[i + 1] = z_[i] + speed[i] * duration[i];
     }
 
     z_[N - 1] = z_[N - 2];
