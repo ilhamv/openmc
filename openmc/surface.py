@@ -38,6 +38,7 @@ class SurfaceCoefficient:
         it is equivalent to (str).
 
     """
+
     def __init__(self, value):
         self.value = value
 
@@ -180,7 +181,7 @@ class Surface(IDManagerMixin, ABC):
         string += '{0: <20}{1}{2}\n'.format('\tBoundary', '=\t',
                                             self._boundary_type)
         if (self._boundary_type in _ALBEDO_BOUNDARIES and
-            not math.isclose(self._albedo, 1.0)):
+                not math.isclose(self._albedo, 1.0)):
             string += '{0: <20}{1}{2}\n'.format('\tBoundary Albedo', '=\t',
                                                 self._albedo)
 
@@ -193,8 +194,10 @@ class Surface(IDManagerMixin, ABC):
 
         if hasattr(self, 'moving') and self.moving:
             string += '{0: <20}'.format('\tMoving') + '\n'
-            string += '{0: <20}{1}{2}\n'.format('velocities', '=\t', np.array_repr(self.velocities).replace('\n', ' '))
-            string += '{0: <20}{1}{2}\n'.format('durations', '=\t', self.durations)
+            string += '{0: <20}{1}{2}\n'.format(
+                'velocities', '=\t', np.array_repr(self.velocities).replace('\n', ' '))
+            string += '{0: <20}{1}{2}\n'.format('durations',
+                                                '=\t', self.durations)
 
         return string
 
@@ -431,14 +434,16 @@ class Surface(IDManagerMixin, ABC):
         if self.boundary_type != 'transmission':
             element.set("boundary", self.boundary_type)
             if (self.boundary_type in _ALBEDO_BOUNDARIES and
-                not math.isclose(self.albedo, 1.0)):
+                    not math.isclose(self.albedo, 1.0)):
                 element.set("albedo", str(self.albedo))
         element.set("coeffs", ' '.join([str(self._coefficients.setdefault(key, 0.0))
                                         for key in self._coeff_keys]))
 
         if hasattr(self, 'moving') and self.moving:
-            element.set("moving_velocities", ' '.join([str(value) for value in self.velocities]))
-            element.set("moving_durations", ' '.join([str(value) for value in self.durations]))
+            element.set("moving_velocities", ' '.join(
+                [str(value) for value in self.velocities]))
+            element.set("moving_durations", ' '.join(
+                [str(value) for value in self.durations]))
 
         return element
 
@@ -515,6 +520,7 @@ class Surface(IDManagerMixin, ABC):
 
 class PlaneMixin:
     """A Plane mixin class for all operations on order 1 surfaces"""
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._periodic_surface = None
@@ -571,14 +577,18 @@ class PlaneMixin:
                     else np.nan for val in (a, b, c)]
             if side == '-':
                 if sign > 0:
-                    ur = np.array([v if not np.isnan(v) else np.inf for v in vals])
+                    ur = np.array(
+                        [v if not np.isnan(v) else np.inf for v in vals])
                 else:
-                    ll = np.array([v if not np.isnan(v) else -np.inf for v in vals])
+                    ll = np.array(
+                        [v if not np.isnan(v) else -np.inf for v in vals])
             elif side == '+':
                 if sign > 0:
-                    ll = np.array([v if not np.isnan(v) else -np.inf for v in vals])
+                    ll = np.array(
+                        [v if not np.isnan(v) else -np.inf for v in vals])
                 else:
-                    ur = np.array([v if not np.isnan(v) else np.inf for v in vals])
+                    ur = np.array(
+                        [v if not np.isnan(v) else np.inf for v in vals])
 
         return BoundingBox(ll, ur)
 
@@ -1821,7 +1831,8 @@ class Sphere(QuadricMixin, Surface):
     def bounding_box(self, side):
         if side == '-':
             return BoundingBox(
-                np.array([self.x0 - self.r, self.y0 - self.r, self.z0 - self.r]),
+                np.array([self.x0 - self.r, self.y0 -
+                         self.r, self.z0 - self.r]),
                 np.array([self.x0 + self.r, self.y0 + self.r, self.z0 + self.r])
             )
         elif side == '+':
@@ -2400,7 +2411,8 @@ class TorusMixin:
         # Only can handle trivial rotation matrices
         close = np.isclose
         if not np.all(close(Rmat, -1.0) | close(Rmat, 0.0) | close(Rmat, 1.0)):
-            raise NotImplementedError('Torus surfaces cannot handle generic rotations')
+            raise NotImplementedError(
+                'Torus surfaces cannot handle generic rotations')
 
         # Translate surface to pivot
         surf = self.translate(-pivot, inplace=inplace)
@@ -2416,7 +2428,8 @@ class TorusMixin:
 
         # Figure out which axis should be used after rotation
         above_center = Rmat @ above_center
-        new_index = np.where(np.isclose(np.abs(above_center - center), 1.0))[0][0]
+        new_index = np.where(np.isclose(
+            np.abs(above_center - center), 1.0))[0][0]
         cls = [XTorus, YTorus, ZTorus][new_index]
 
         # Create rotated torus
@@ -2891,7 +2904,8 @@ class Halfspace(Region):
             memo = {}
 
         # If rotated surface not in memo, add it
-        key = (self.surface, tuple(np.ravel(rotation)), tuple(pivot), order, inplace)
+        key = (self.surface, tuple(np.ravel(rotation)),
+               tuple(pivot), order, inplace)
         if key not in memo:
             memo[key] = self.surface.rotate(rotation, pivot=pivot, order=order,
                                             inplace=inplace)
