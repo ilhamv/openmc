@@ -193,7 +193,7 @@ class Surface(IDManagerMixin, ABC):
 
         if hasattr(self, 'moving') and self.moving:
             string += '{0: <20}'.format('\tMoving') + '\n'
-            string += '{0: <20}{1}{2}\n'.format('speeds', '=\t', self.speeds)
+            string += '{0: <20}{1}{2}\n'.format('velocities', '=\t', np.array_repr(self.velocities).replace('\n', ' '))
             string += '{0: <20}{1}{2}\n'.format('durations', '=\t', self.durations)
 
         return string
@@ -437,7 +437,7 @@ class Surface(IDManagerMixin, ABC):
                                         for key in self._coeff_keys]))
 
         if hasattr(self, 'moving') and self.moving:
-            element.set("moving_speeds", ' '.join([str(value) for value in self.speeds]))
+            element.set("moving_velocities", ' '.join([str(value) for value in self.velocities]))
             element.set("moving_durations", ' '.join([str(value) for value in self.durations]))
 
         return element
@@ -873,33 +873,35 @@ class XPlane(PlaneMixin, Surface):
     c = SurfaceCoefficient(0.)
     d = x0
 
-    def move(self, speeds, durations):
-        self.speeds = np.array(speeds)
+    def move(self, velocities, durations):
         self.durations = np.array(durations)
+        self.velocities = np.zeros((len(durations), 3))
+        self.velocities[:, 0] = velocities
         self.moving = True
 
     def evaluate(self, point, time=0.0):
-        if not hasattr(self, 'moving') or not self.moving:
-            return point[0] - self.x0
-        else:
-            time_grid = np.zeros(2 + len(self.durations))
-            time_grid[1:-1] = np.cumsum(self.durations)
-            time_grid[0] = 0.0
-            time_grid[-1] = np.inf
+        if hasattr(self, 'moving') and self.moving:
+            self, _evaluate(moving, point, time)
+        return point[0] - self.x0
 
-            x = np.zeros_like(time_grid)
-            x[0] = self.x0
-            for i in range(len(x) - 2):
-                x[i+1] = x[i] + self.speeds[i] * self.durations[i]
-            x[-1] = x[-2]
+    def _evaluate_moving(self, point, time):
+        # Set time grid
+        time_grid = np.zeros(2 + len(self.durations))
+        time_grid[1:-1] = np.cumsum(self.durations)
+        time_grid[0] = 0.0
+        time_grid[-1] = np.inf
 
-            idx = np.searchsorted(time_grid, time) - 1
-            if idx < len(self.speeds):
-                x0 = x[idx] + (time - time_grid[idx]) * self.speeds[idx]
-            else:
-                x0 = x[-1]
+        # Move interval index
+        idx = np.searchsorted(time_grid, time) - 1
 
-            return point[0] - x0
+        # Translation velocity
+        Vx = self.velocities[idx, 0]
+
+        # Translated position
+        t_local = time - time_grid[idx]
+        x_translated = point[0] - Vx * t_local
+
+        return x_translated - self.x0
 
 
 class YPlane(PlaneMixin, Surface):
@@ -963,33 +965,35 @@ class YPlane(PlaneMixin, Surface):
     c = SurfaceCoefficient(0.)
     d = y0
 
-    def move(self, speeds, durations):
-        self.speeds = np.array(speeds)
+    def move(self, velocities, durations):
         self.durations = np.array(durations)
+        self.velocities = np.zeros((len(durations), 3))
+        self.velocities[:, 1] = velocities
         self.moving = True
 
     def evaluate(self, point, time=0.0):
-        if not hasattr(self, 'moving') or not self.moving:
-            return point[1] - self.y0
-        else:
-            time_grid = np.zeros(2 + len(self.durations))
-            time_grid[1:-1] = np.cumsum(self.durations)
-            time_grid[0] = 0.0
-            time_grid[-1] = np.inf
+        if hasattr(self, 'moving') and self.moving:
+            self, _evaluate(moving, point, time)
+        return point[1] - self.y0
 
-            y = np.zeros_like(time_grid)
-            y[0] = self.y0
-            for i in range(len(y) - 2):
-                y[i+1] = y[i] + self.speeds[i] * self.durations[i]
-            y[-1] = y[-2]
+    def _evaluate_moving(self, point, time):
+        # Set time grid
+        time_grid = np.zeros(2 + len(self.durations))
+        time_grid[1:-1] = np.cumsum(self.durations)
+        time_grid[0] = 0.0
+        time_grid[-1] = np.inf
 
-            idx = np.searchsorted(time_grid, time) - 1
-            if idx < len(self.speeds):
-                y0 = y[idx] + (time - time_grid[idx]) * self.speeds[idx]
-            else:
-                y0 = y[-1]
+        # Move interval index
+        idx = np.searchsorted(time_grid, time) - 1
 
-            return point[1] - y0
+        # Translation velocity
+        Vy = self.velocities[idx, 1]
+
+        # Translated position
+        t_local = time - time_grid[idx]
+        y_translated = point[1] - Vy * t_local
+
+        return y_translated - self.y0
 
 
 class ZPlane(PlaneMixin, Surface):
@@ -1053,33 +1057,35 @@ class ZPlane(PlaneMixin, Surface):
     c = SurfaceCoefficient(1.)
     d = z0
 
-    def move(self, speeds, durations):
-        self.speeds = np.array(speeds)
+    def move(self, velocities, durations):
         self.durations = np.array(durations)
+        self.velocities = np.zeros((len(durations), 3))
+        self.velocities[:, 2] = velocities
         self.moving = True
 
     def evaluate(self, point, time=0.0):
-        if not hasattr(self, 'moving') or not self.moving:
-            return point[2] - self.z0
-        else:
-            time_grid = np.zeros(2 + len(self.durations))
-            time_grid[1:-1] = np.cumsum(self.durations)
-            time_grid[0] = 0.0
-            time_grid[-1] = np.inf
+        if hasattr(self, 'moving') and self.moving:
+            self, _evaluate(moving, point, time)
+        return point[2] - self.z0
 
-            z = np.zeros_like(time_grid)
-            z[0] = self.z0
-            for i in range(len(z) - 2):
-                z[i+1] = z[i] + self.speeds[i] * self.durations[i]
-            z[-1] = z[-2]
+    def _evaluate_moving(self, point, time):
+        # Set time grid
+        time_grid = np.zeros(2 + len(self.durations))
+        time_grid[1:-1] = np.cumsum(self.durations)
+        time_grid[0] = 0.0
+        time_grid[-1] = np.inf
 
-            idx = np.searchsorted(time_grid, time) - 1
-            if idx < len(self.speeds):
-                z0 = z[idx] + (time - time_grid[idx]) * self.speeds[idx]
-            else:
-                z0 = z[-1]
+        # Move interval index
+        idx = np.searchsorted(time_grid, time) - 1
 
-            return point[2] - z0
+        # Translation velocity
+        Vz = self.velocities[idx, 2]
+
+        # Translated position
+        t_local = time - time_grid[idx]
+        z_translated = point[2] - Vz * t_local
+
+        return z_translated - self.z0
 
 
 class QuadricMixin:
