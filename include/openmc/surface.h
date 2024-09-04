@@ -88,7 +88,7 @@ public:
   unique_ptr<BoundaryCondition> bc_; //!< Boundary condition
   GeometryType geom_type_;           //!< Geometry type indicator (CSG or DAGMC)
   bool surf_source_ {false}; //!< Activate source banking for the surface?
-  
+
   //!< Moving surface parameters
   bool moving_ {false};
   vector<double> moving_time_grid_;
@@ -107,7 +107,8 @@ public:
   //! \param speed Speed of the point (used only if the surface is moving).
   //! \return true if the point is on the "positive" side of the surface and
   //!   false otherwise.
-  bool sense(Position r, Direction u, double time = 0.0, double speed = 0.0) const;
+  bool sense(
+    Position r, Direction u, double time = 0.0, double speed = 0.0) const;
 
   //! Determine the direction of a ray reflected from the surface.
   //! \param[in] r The point at which the ray is incident.
@@ -125,7 +126,7 @@ public:
   //! Surfaces can be described by some function f(x, y, z) = 0.  This member
   //! function evaluates that mathematical function.
   //! \param r A 3D Cartesian coordinate.
-  //! \param[in] time Timestamp of the point if the surface is moving, such 
+  //! \param[in] time Timestamp of the point if the surface is moving, such
   //!   that the point is a function in time.
   virtual double evaluate(Position r, double time = 0.0) const = 0;
 

@@ -133,8 +133,8 @@ bool Surface::sense(Position r, Direction u, double time, double speed) const
       // particle.
 
       // Surface move index
-      auto idx =
-        lower_bound_index(moving_time_grid_.begin(), moving_time_grid_.end(), time);
+      auto idx = lower_bound_index(
+        moving_time_grid_.begin(), moving_time_grid_.end(), time);
 
       // Surface move velocity
       auto V = moving_velocities_[idx];
@@ -239,7 +239,7 @@ double axis_aligned_plane_distance(
 SurfaceXPlane::SurfaceXPlane(pugi::xml_node surf_node) : CSGSurface(surf_node)
 {
   read_coeffs(surf_node, id_, {&x0_});
-  
+
   // Moving surface parameters
   if (check_for_node(surf_node, "moving_velocities") &&
       check_for_node(surf_node, "moving_durations")) {
@@ -272,13 +272,14 @@ double SurfaceXPlane::evaluate(Position r, double time) const
   if (!moving_) {
     return r.x - x0_;
   }
-      
+
   // Move index
-  auto idx = lower_bound_index(moving_time_grid_.begin(), moving_time_grid_.end(), time);
+  auto idx =
+    lower_bound_index(moving_time_grid_.begin(), moving_time_grid_.end(), time);
 
   // Move velocity
   auto Vx = moving_velocities_[idx][0];
-    
+
   // Translated position
   double t_local = time - moving_time_grid_[idx];
   double x_translated = r.x - Vx * t_local;
@@ -286,7 +287,8 @@ double SurfaceXPlane::evaluate(Position r, double time) const
   return x_translated - x0_;
 }
 
-double SurfaceXPlane::distance(Position r, Direction u, bool coincident, double time, double speed) const
+double SurfaceXPlane::distance(
+  Position r, Direction u, bool coincident, double time, double speed) const
 {
   if (!moving_) {
     return axis_aligned_plane_distance<0>(r, u, coincident, x0_);
@@ -296,12 +298,13 @@ double SurfaceXPlane::distance(Position r, Direction u, bool coincident, double 
   double ux_original = u.x;
 
   // Move index
-  auto idx = lower_bound_index(moving_time_grid_.begin(), moving_time_grid_.end(), time);
+  auto idx =
+    lower_bound_index(moving_time_grid_.begin(), moving_time_grid_.end(), time);
 
   // Distance accumulator
   double total_distance = 0.0;
 
-  // Evaluate the current and the subsequent intervals until intersection 
+  // Evaluate the current and the subsequent intervals until intersection
   // occurs (if not, return INFTY)
   while (idx < moving_velocities_.size()) {
     // Apply moving velocity
@@ -369,7 +372,7 @@ BoundingBox SurfaceXPlane::bounding_box(bool pos_side) const
 SurfaceYPlane::SurfaceYPlane(pugi::xml_node surf_node) : CSGSurface(surf_node)
 {
   read_coeffs(surf_node, id_, {&y0_});
-  
+
   // Moving surface parameters
   if (check_for_node(surf_node, "moving_velocities") &&
       check_for_node(surf_node, "moving_durations")) {
@@ -402,13 +405,14 @@ double SurfaceYPlane::evaluate(Position r, double time) const
   if (!moving_) {
     return r.y - y0_;
   }
-      
+
   // Move index
-  auto idx = lower_bound_index(moving_time_grid_.begin(), moving_time_grid_.end(), time);
+  auto idx =
+    lower_bound_index(moving_time_grid_.begin(), moving_time_grid_.end(), time);
 
   // Move velocity
   auto Vy = moving_velocities_[idx][1];
-    
+
   // Translated position
   double t_local = time - moving_time_grid_[idx];
   double y_translated = r.y - Vy * t_local;
@@ -416,7 +420,8 @@ double SurfaceYPlane::evaluate(Position r, double time) const
   return y_translated - y0_;
 }
 
-double SurfaceYPlane::distance(Position r, Direction u, bool coincident, double time, double speed) const
+double SurfaceYPlane::distance(
+  Position r, Direction u, bool coincident, double time, double speed) const
 {
   if (!moving_) {
     return axis_aligned_plane_distance<1>(r, u, coincident, y0_);
@@ -426,12 +431,13 @@ double SurfaceYPlane::distance(Position r, Direction u, bool coincident, double 
   double uy_original = u.y;
 
   // Move index
-  auto idx = lower_bound_index(moving_time_grid_.begin(), moving_time_grid_.end(), time);
+  auto idx =
+    lower_bound_index(moving_time_grid_.begin(), moving_time_grid_.end(), time);
 
   // Distance accumulator
   double total_distance = 0.0;
 
-  // Evaluate the current and the subsequent intervals until intersection 
+  // Evaluate the current and the subsequent intervals until intersection
   // occurs (if not, return INFTY)
   while (idx < moving_velocities_.size()) {
     // Apply moving velocity
@@ -499,7 +505,7 @@ BoundingBox SurfaceYPlane::bounding_box(bool pos_side) const
 SurfaceZPlane::SurfaceZPlane(pugi::xml_node surf_node) : CSGSurface(surf_node)
 {
   read_coeffs(surf_node, id_, {&z0_});
-  
+
   // Moving surface parameters
   if (check_for_node(surf_node, "moving_velocities") &&
       check_for_node(surf_node, "moving_durations")) {
@@ -532,13 +538,14 @@ double SurfaceZPlane::evaluate(Position r, double time) const
   if (!moving_) {
     return r.z - z0_;
   }
-      
+
   // Move index
-  auto idx = lower_bound_index(moving_time_grid_.begin(), moving_time_grid_.end(), time);
+  auto idx =
+    lower_bound_index(moving_time_grid_.begin(), moving_time_grid_.end(), time);
 
   // Move velocity
   auto Vz = moving_velocities_[idx][2];
-    
+
   // Translated position
   double t_local = time - moving_time_grid_[idx];
   double z_translated = r.z - Vz * t_local;
@@ -546,7 +553,8 @@ double SurfaceZPlane::evaluate(Position r, double time) const
   return z_translated - z0_;
 }
 
-double SurfaceZPlane::distance(Position r, Direction u, bool coincident, double time, double speed) const
+double SurfaceZPlane::distance(
+  Position r, Direction u, bool coincident, double time, double speed) const
 {
   if (!moving_) {
     return axis_aligned_plane_distance<2>(r, u, coincident, z0_);
@@ -556,12 +564,13 @@ double SurfaceZPlane::distance(Position r, Direction u, bool coincident, double 
   double uz_original = u.z;
 
   // Move index
-  auto idx = lower_bound_index(moving_time_grid_.begin(), moving_time_grid_.end(), time);
+  auto idx =
+    lower_bound_index(moving_time_grid_.begin(), moving_time_grid_.end(), time);
 
   // Distance accumulator
   double total_distance = 0.0;
 
-  // Evaluate the current and the subsequent intervals until intersection 
+  // Evaluate the current and the subsequent intervals until intersection
   // occurs (if not, return INFTY)
   while (idx < moving_velocities_.size()) {
     // Apply moving velocity
@@ -636,7 +645,8 @@ double SurfacePlane::evaluate(Position r, double time) const
   return A_ * r.x + B_ * r.y + C_ * r.z - D_;
 }
 
-double SurfacePlane::distance(Position r, Direction u, bool coincident, double time, double speed) const
+double SurfacePlane::distance(
+  Position r, Direction u, bool coincident, double time, double speed) const
 {
   const double f = A_ * r.x + B_ * r.y + C_ * r.z - D_;
   const double projection = A_ * u.x + B_ * u.y + C_ * u.z;
@@ -888,7 +898,8 @@ double SurfaceSphere::evaluate(Position r, double time) const
   return x * x + y * y + z * z - radius_ * radius_;
 }
 
-double SurfaceSphere::distance(Position r, Direction u, bool coincident, double time, double speed) const
+double SurfaceSphere::distance(
+  Position r, Direction u, bool coincident, double time, double speed) const
 {
   const double x = r.x - x0_;
   const double y = r.y - y0_;
@@ -1051,7 +1062,8 @@ double SurfaceXCone::evaluate(Position r, double time) const
   return axis_aligned_cone_evaluate<0, 1, 2>(r, x0_, y0_, z0_, radius_sq_);
 }
 
-double SurfaceXCone::distance(Position r, Direction u, bool coincident, double time, double speed) const
+double SurfaceXCone::distance(
+  Position r, Direction u, bool coincident, double time, double speed) const
 {
   return axis_aligned_cone_distance<0, 1, 2>(
     r, u, coincident, x0_, y0_, z0_, radius_sq_);
@@ -1083,7 +1095,8 @@ double SurfaceYCone::evaluate(Position r, double time) const
   return axis_aligned_cone_evaluate<1, 0, 2>(r, y0_, x0_, z0_, radius_sq_);
 }
 
-double SurfaceYCone::distance(Position r, Direction u, bool coincident, double time, double speed) const
+double SurfaceYCone::distance(
+  Position r, Direction u, bool coincident, double time, double speed) const
 {
   return axis_aligned_cone_distance<1, 0, 2>(
     r, u, coincident, y0_, x0_, z0_, radius_sq_);
@@ -1115,7 +1128,8 @@ double SurfaceZCone::evaluate(Position r, double time) const
   return axis_aligned_cone_evaluate<2, 0, 1>(r, z0_, x0_, y0_, radius_sq_);
 }
 
-double SurfaceZCone::distance(Position r, Direction u, bool coincident, double time, double speed) const
+double SurfaceZCone::distance(
+  Position r, Direction u, bool coincident, double time, double speed) const
 {
   return axis_aligned_cone_distance<2, 0, 1>(
     r, u, coincident, z0_, x0_, y0_, radius_sq_);
@@ -1318,7 +1332,8 @@ double SurfaceXTorus::evaluate(Position r, double time) const
          std::pow(std::sqrt(y * y + z * z) - A_, 2) / (C_ * C_) - 1.;
 }
 
-double SurfaceXTorus::distance(Position r, Direction u, bool coincident, double time, double speed) const
+double SurfaceXTorus::distance(
+  Position r, Direction u, bool coincident, double time, double speed) const
 {
   double x = r.x - x0_;
   double y = r.y - y0_;
@@ -1371,7 +1386,8 @@ double SurfaceYTorus::evaluate(Position r, double time) const
          std::pow(std::sqrt(x * x + z * z) - A_, 2) / (C_ * C_) - 1.;
 }
 
-double SurfaceYTorus::distance(Position r, Direction u, bool coincident, double time, double speed) const
+double SurfaceYTorus::distance(
+  Position r, Direction u, bool coincident, double time, double speed) const
 {
   double x = r.x - x0_;
   double y = r.y - y0_;
@@ -1424,7 +1440,8 @@ double SurfaceZTorus::evaluate(Position r, double time) const
          std::pow(std::sqrt(x * x + y * y) - A_, 2) / (C_ * C_) - 1.;
 }
 
-double SurfaceZTorus::distance(Position r, Direction u, bool coincident, double time, double speed) const
+double SurfaceZTorus::distance(
+  Position r, Direction u, bool coincident, double time, double speed) const
 {
   double x = r.x - x0_;
   double y = r.y - y0_;
