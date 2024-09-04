@@ -88,6 +88,11 @@ public:
   unique_ptr<BoundaryCondition> bc_; //!< Boundary condition
   GeometryType geom_type_;           //!< Geometry type indicator (CSG or DAGMC)
   bool surf_source_ {false}; //!< Activate source banking for the surface?
+  
+  //!< Moving surface parameters
+  bool moving_ {false};
+  vector<double> moving_time_grid_;
+  vector<Direction> moving_velocities_;
 
   explicit Surface(pugi::xml_node surf_node);
   Surface();
@@ -98,31 +103,30 @@ public:
   //! \param r The 3D Cartesian coordinate of a point.
   //! \param u A direction used to "break ties" and pick a sense when the
   //!   point is very close to the surface.
-  //! \param time Time parameter (currently used only by axis-aligned planes)
+  //! \param time Timestamp of the point (used only if the surface is moving).
+  //! \param speed Speed of the point (used only if the surface is moving).
   //! \return true if the point is on the "positive" side of the surface and
   //!   false otherwise.
-  bool sense(Position r, Direction u, double time = 0.0) const;
+  bool sense(Position r, Direction u, double time = 0.0, double speed = 0.0) const;
 
   //! Determine the direction of a ray reflected from the surface.
   //! \param[in] r The point at which the ray is incident.
   //! \param[in] u Incident direction of the ray
   //! \param[inout] p Pointer to the particle. Only DAGMC uses this.
-  //! \param[in] time Incident time of the particle
-  //!   (currently used only by axis-aligned planes)
   //! \return Outgoing direction of the ray
-  virtual Direction reflect(Position r, Direction u, GeometryState* p = nullptr,
-    double time = 0.0) const;
+  virtual Direction reflect(
+    Position r, Direction u, GeometryState* p = nullptr) const;
 
-  virtual Direction diffuse_reflect(Position r, Direction u, uint64_t* seed,
-    GeometryState* p = nullptr, double time = 0.0) const;
+  virtual Direction diffuse_reflect(
+    Position r, Direction u, uint64_t* seed, GeometryState* p = nullptr) const;
 
   //! Evaluate the equation describing the surface.
   //!
   //! Surfaces can be described by some function f(x, y, z) = 0.  This member
   //! function evaluates that mathematical function.
   //! \param r A 3D Cartesian coordinate.
-  //! \param[in] time Incident time of the particle
-  //!   (currently used only by axis-aligned planes)
+  //! \param[in] time Timestamp of the point if the surface is moving, such 
+  //!   that the point is a function in time.
   virtual double evaluate(Position r, double time = 0.0) const = 0;
 
   //! Compute the distance between a point and the surface along a ray.
@@ -130,10 +134,8 @@ public:
   //! \param u The direction of the ray.
   //! \param coincident A hint to the code that the given point should lie
   //!   exactly on the surface.
-  //! \param[in] time Incident time of the particle
-  //!   (currently used only by axis-aligned planes)
-  //! \param[in] speed The speed of the particle
-  //!   (currently used only by axis-aligned planes)
+  //! \param time Timestamp of the point (used only if the surface is moving).
+  //! \param speed Speed of the point (used only if the surface is moving).
   virtual double distance(Position r, Direction u, bool coincident,
     double time = 0.0, double speed = 0.0) const = 0;
 
@@ -176,8 +178,6 @@ public:
   BoundingBox bounding_box(bool pos_side) const override;
 
   double x0_;
-  bool moving_;
-  vector<double> x_, t_;
 };
 
 //==============================================================================
@@ -197,8 +197,6 @@ public:
   BoundingBox bounding_box(bool pos_side) const override;
 
   double y0_;
-  bool moving_;
-  vector<double> y_, t_;
 };
 
 //==============================================================================
@@ -218,8 +216,6 @@ public:
   BoundingBox bounding_box(bool pos_side) const override;
 
   double z0_;
-  bool moving_;
-  vector<double> z_, t_;
 };
 
 //==============================================================================

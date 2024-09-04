@@ -884,9 +884,8 @@ class XPlane(PlaneMixin, Surface):
     d = x0
 
     def move(self, velocities, durations):
+        self.velocities = np.array(velocities)
         self.durations = np.array(durations)
-        self.velocities = np.zeros((len(durations), 3))
-        self.velocities[:, 0] = velocities
         self.moving = True
 
     def evaluate(self, point, time=0.0):
@@ -905,7 +904,7 @@ class XPlane(PlaneMixin, Surface):
         idx = np.searchsorted(time_grid, time) - 1
 
         # Translation velocity
-        Vx = self.velocities[idx, 0]
+        Vx = self.velocities[idx]
 
         # Translated position
         t_local = time - time_grid[idx]
@@ -976,9 +975,8 @@ class YPlane(PlaneMixin, Surface):
     d = y0
 
     def move(self, velocities, durations):
+        self.velocities = np.array(velocities)
         self.durations = np.array(durations)
-        self.velocities = np.zeros((len(durations), 3))
-        self.velocities[:, 1] = velocities
         self.moving = True
 
     def evaluate(self, point, time=0.0):
@@ -997,7 +995,7 @@ class YPlane(PlaneMixin, Surface):
         idx = np.searchsorted(time_grid, time) - 1
 
         # Translation velocity
-        Vy = self.velocities[idx, 1]
+        Vy = self.velocities[idx]
 
         # Translated position
         t_local = time - time_grid[idx]
@@ -1068,9 +1066,8 @@ class ZPlane(PlaneMixin, Surface):
     d = z0
 
     def move(self, velocities, durations):
+        self.velocities = np.array(velocities)
         self.durations = np.array(durations)
-        self.velocities = np.zeros((len(durations), 3))
-        self.velocities[:, 2] = velocities
         self.moving = True
 
     def evaluate(self, point, time=0.0):
@@ -1089,7 +1086,7 @@ class ZPlane(PlaneMixin, Surface):
         idx = np.searchsorted(time_grid, time) - 1
 
         # Translation velocity
-        Vz = self.velocities[idx, 2]
+        Vz = self.velocities[idx]
 
         # Translated position
         t_local = time - time_grid[idx]
