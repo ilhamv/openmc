@@ -1099,7 +1099,8 @@ int ProjectionPlot::advance_to_boundary_from_void(GeometryState& p)
   int intersected_surface = -1;
   for (auto c_i : uni->cells_) {
     // TODO: time-dependent plot
-    auto dist = model::cells.at(c_i)->distance(coord.r, coord.u, p.time(), p.speed(), 0, &p);
+    auto dist = model::cells.at(c_i)->distance(
+      coord.r, coord.u, p.time(), p.speed(), 0, &p);
     if (dist.first < min_dist) {
       min_dist = dist.first;
       intersected_surface = dist.second;

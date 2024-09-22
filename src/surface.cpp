@@ -137,8 +137,9 @@ bool Surface::sense(Position r, Direction u, double time, double speed) const
         moving_time_grid_.begin(), moving_time_grid_.end(), time);
 
       // Surface moving velocity
-      double dt = moving_time_grid_[idx + 1] - moving_time_grid_[idx]
-      auto V = (moving_translations_[idx + 1] - moving_translations_[idx]) / dt;
+      double dt =
+        moving_time_grid_[idx + 1] - moving_time_grid_[idx] auto V =
+          (moving_translations_[idx + 1] - moving_translations_[idx]) / dt;
 
       // Particle relative direction
       auto u_relative = u - V / speed;
@@ -445,7 +446,7 @@ BoundingBox SurfaceYPlane::bounding_box(bool pos_side) const
 SurfaceZPlane::SurfaceZPlane(pugi::xml_node surf_node) : CSGSurface(surf_node)
 {
   read_coeffs(surf_node, id_, {&z0_});
-  
+
   // Return if not moving
   if (!check_for_node(surf_node, "moving_velocities"))
     return;
@@ -472,17 +473,17 @@ SurfaceZPlane::SurfaceZPlane(pugi::xml_node surf_node) : CSGSurface(surf_node)
   time_grid[N] = INFTY;
   translations[N][2] = translations[N - 1][2];
 
-  std::cout<<"Surface  "<<id_<<"\n";
-  std::cout<<"Time grid  ";
+  std::cout << "Surface  " << id_ << "\n";
+  std::cout << "Time grid  ";
   for (int n = 0; n < moving_time_grid_.size(); n++) {
-    std::cout<<moving_time_grid_[n]<<"  ";
+    std::cout << moving_time_grid_[n] << "  ";
   }
-  std::cout<<"\n";
-  std::cout<<"Translations  ";
+  std::cout << "\n";
+  std::cout << "Translations  ";
   for (int n = 0; n < moving_time_grid_.size(); n++) {
-    std::cout<<moving_translations_[n]<<"  ";
+    std::cout << moving_translations_[n] << "  ";
   }
-  std::cout<<"\n";
+  std::cout << "\n";
 }
 
 double SurfaceZPlane::evaluate(Position r, double time) const
@@ -541,7 +542,7 @@ double SurfaceZPlane::distance(
 
     // Get distance
     double distance = axis_aligned_plane_distance<2>(r, u, coincident, z0_);
-  
+
     // Beyond the interval?
     double distance_time = distance / speed;
     double dt = moving_time_grid_[idx + 1] - time;

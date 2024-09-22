@@ -295,7 +295,7 @@ public:
   // Accessors for direction in local coordinates
   Direction& u_local() { return coord_[n_coord_ - 1].u; }
   const Direction& u_local() const { return coord_[n_coord_ - 1].u; }
-  
+
   // Accessors for time (units are seconds).
   double& time() { return time_; }
   const double& time() const { return time_; }
@@ -344,7 +344,7 @@ private:
                             //!< current tallies
   Position r_last_;         //!< previous coordinates
   Direction u_last_;        //!< previous direction coordinates
-  
+
   double time_ {0.0};
   double time_last_ {0.0};
   double speed_ {0.0};

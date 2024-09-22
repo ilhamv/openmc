@@ -796,7 +796,8 @@ std::pair<double, int32_t> Region::distance(
     // Calculate the distance to this surface.
     // Note the off-by-one indexing
     bool coincident {std::abs(token) == std::abs(on_surface)};
-    double d {model::surfaces[abs(token) - 1]->distance(r, u, time, speed, coincident)};
+    double d {
+      model::surfaces[abs(token) - 1]->distance(r, u, time, speed, coincident)};
 
     // Check if this distance is the new minimum.
     if (d < min_dist) {
@@ -812,7 +813,8 @@ std::pair<double, int32_t> Region::distance(
 
 //==============================================================================
 
-bool Region::contains(Position r, Direction u, double time, double speed, int32_t on_surface) const
+bool Region::contains(
+  Position r, Direction u, double time, double speed, int32_t on_surface) const
 {
   if (simple_) {
     return contains_simple(r, u, time, speed, on_surface);
@@ -823,7 +825,8 @@ bool Region::contains(Position r, Direction u, double time, double speed, int32_
 
 //==============================================================================
 
-bool Region::contains_simple(Position r, Direction u, double time, double speed, int32_t on_surface) const
+bool Region::contains_simple(
+  Position r, Direction u, double time, double speed, int32_t on_surface) const
 {
   for (int32_t token : expression_) {
     // Assume that no tokens are operators. Evaluate the sense of particle with
@@ -846,7 +849,8 @@ bool Region::contains_simple(Position r, Direction u, double time, double speed,
 
 //==============================================================================
 
-bool Region::contains_complex(Position r, Direction u, double time, double speed, int32_t on_surface) const
+bool Region::contains_complex(
+  Position r, Direction u, double time, double speed, int32_t on_surface) const
 {
   bool in_cell = true;
   int total_depth = 0;
