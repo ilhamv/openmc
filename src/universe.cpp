@@ -40,10 +40,12 @@ void Universe::to_hdf5(hid_t universes_group) const
 bool Universe::find_cell(GeometryState& p) const
 {
   const auto& cells {
-    !partitioner_ ? cells_ : partitioner_->get_cells(p.r_local(), p.u_local())};
+    !partitioner_ ? cells_ : partitioner_->get_cells(p.r_local(), p.u_local(), p.time(), p.speed())};
 
   Position r {p.r_local()};
   Position u {p.u_local()};
+  double time {p.time()};
+  double speed {p.speed()};
   auto surf = p.surface();
   int32_t i_univ = p.lowest_coord().universe;
 
@@ -51,7 +53,7 @@ bool Universe::find_cell(GeometryState& p) const
     if (model::cells[i_cell]->universe_ != i_univ)
       continue;
     // Check if this cell contains the particle
-    if (model::cells[i_cell]->contains(r, u, surf)) {
+    if (model::cells[i_cell]->contains(r, u, time, speed, surf)) {
       p.lowest_coord().cell = i_cell;
       return true;
     }
@@ -178,7 +180,7 @@ UniversePartitioner::UniversePartitioner(const Universe& univ)
 }
 
 const vector<int32_t>& UniversePartitioner::get_cells(
-  Position r, Direction u) const
+  Position r, Direction u, double time, double speed) const
 {
   // Perform a binary search for the partition containing the given coordinates.
   int left = 0;
@@ -187,7 +189,7 @@ const vector<int32_t>& UniversePartitioner::get_cells(
   while (true) {
     // Check the sense of the coordinates for the current surface.
     const auto& surf = *model::surfaces[surfs_[middle]];
-    if (surf.sense(r, u)) {
+    if (surf.sense(r, u, time, speed)) {
       // The coordinates lie in the positive halfspace.  Recurse if there are
       // more surfaces to check.  Otherwise, return the cells on the positive
       // side of this surface.

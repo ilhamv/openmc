@@ -43,7 +43,7 @@ bool check_cell_overlap(GeometryState& p, bool error)
     // Loop through each cell on this level
     for (auto index_cell : univ.cells_) {
       Cell& c = *model::cells[index_cell];
-      if (c.contains(p.coord(j).r, p.coord(j).u, p.surface())) {
+      if (c.contains(p.coord(j).r, p.coord(j).u, p.time(), p.speed(), p.surface())) {
         if (index_cell != p.coord(j).cell) {
           if (error) {
             fatal_error(
@@ -118,8 +118,10 @@ bool find_cell_inner(
       // Check if this cell contains the particle.
       Position r {p.r_local()};
       Direction u {p.u_local()};
+      double time {p.time()};
+      double speed {p.speed()};
       auto surf = p.surface();
-      if (model::cells[i_cell]->contains(r, u, surf)) {
+      if (model::cells[i_cell]->contains(r, u, time, speed, surf)) {
         p.lowest_coord().cell = i_cell;
         found = true;
         break;
@@ -369,10 +371,12 @@ BoundaryInfo distance_to_boundary(GeometryState& p)
     const auto& coord {p.coord(i)};
     const Position& r {coord.r};
     const Direction& u {coord.u};
+    const double time {p.time()};
+    const double speed {p.speed()};
     Cell& c {*model::cells[coord.cell]};
 
     // Find the oncoming surface in this cell and the distance to it.
-    auto surface_distance = c.distance(r, u, p.surface(), &p);
+    auto surface_distance = c.distance(r, u, time, speed, p.surface(), &p);
     d_surf = surface_distance.first;
     level_surf_cross = surface_distance.second;
 
